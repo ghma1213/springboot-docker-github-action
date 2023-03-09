@@ -34,3 +34,22 @@ jobs:
       uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
       with:
         arguments: build
+    ## 웹 이미지 빌드 및 도커허브에 push
+    - name: web docker build and push
+      run: |
+        docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        docker build -t ${{ secrets.DOCKER_REPO }}/spring-docker-study .
+        docker push ${{ secrets.DOCKER_REPO }}/spring-docker-study
+    ## docker compose up
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ubuntu
+        key: ${{ secrets.KEY }}
+        script: |
+          sudo docker rm -f $(docker ps -qa)
+          sudo docker pull ${{ secrets.DOCKER_REPO }}/spring-docker-study
+          sudo docker pull ${{ secrets.DOCKER_REPO }}/spring-docker-study-nginx
+          docker-compose up -d
+          docker image prune -f
